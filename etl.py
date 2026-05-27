@@ -67,7 +67,7 @@ def map_shopify_orders (orders):
                 "total_quantity": total_qty,
                 "status_general": get_status_general(order),
                 "status_financial":check_status(order.get("financial_status", "")),
-                "currency": "USD"  # order.get("currency", "UAH") -future improvement: currency normalization to USD
+                "currency": "USD",  # order.get("currency", "UAH") -future improvement: currency normalization to USD
                 "line_items": order.get("line_items", []) 
         })
     return result
@@ -220,6 +220,11 @@ def map_ebay_order_details(orders):
 def map_ebay_transactions(data):
     result = []
     txns = data.get("GetOrderTransactions", [])
+    if not txns:
+        return result
+    
+    response = txns[0].get("GetOrderTransactionsResponse", {})
+    order = response.get("OrderArray", {}).get("Order", {})
     if not order:
         return result
 
@@ -230,9 +235,6 @@ def map_ebay_transactions(data):
         tx_type = "REFUND"
     else:
         tx_type = "SALE"
-
-    response = txns[0].get("GetOrderTransactionsResponse", {})
-    order = response.get("OrderArray", {}).get("Order", {})
 
     if order:
         result.append({
