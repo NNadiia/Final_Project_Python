@@ -28345,6 +28345,107 @@
         }
       ],
       "shipping_lines": []
+    },
+    {
+      "id": 9000000000001,
+      "created_at": "2026-04-05T10:00:00+03:00",
+      "financial_status": "paid",
+      "cancelled_at": null,
+      "closed_at": "2026-04-05T12:00:00+03:00",
+      "subtotal_price": "5000.00",
+      "total_price": "5500.00",
+      "total_tax": "500.00",
+      "currency": "UAH",
+      "line_items": [
+        {
+          "title": "Membership lvl 5",
+          "quantity": 1,
+          "price": "5000.00",
+          "variant_id": 901
+        }
+      ]
+    },
+    {
+      "id": 9000000000002,
+      "created_at": "2026-04-12T14:30:00+03:00",
+      "financial_status": "paid",
+      "cancelled_at": null,
+      "closed_at": "2026-04-12T16:00:00+03:00",
+      "subtotal_price": "3000.00",
+      "total_price": "3200.00",
+      "total_tax": "200.00",
+      "currency": "UAH",
+      "line_items": [
+        {
+          "title": "Surfboard 2channels",
+          "quantity": 1,
+          "price": "3000.00",
+          "variant_id": 902
+        }
+      ]
+    },
+    {
+      "id": 9000000000003,
+      "created_at": "2026-04-20T09:15:00+03:00",
+      "financial_status": "paid",
+      "cancelled_at": null,
+      "closed_at": null,
+      "subtotal_price": "2000.00",
+      "total_price": "2200.00",
+      "total_tax": "200.00",
+      "currency": "UAH",
+      "line_items": [
+        {
+          "title": "T-shirt new collection",
+          "quantity": 2,
+          "price": "500.00",
+          "variant_id": 903
+        },
+        {
+          "title": "Custom engraved wallet",
+          "quantity": 1,
+          "price": "1000.00",
+          "variant_id": 904
+        }
+      ]
+    },
+    {
+      "id": 9000000000004,
+      "created_at": "2026-05-03T11:00:00+03:00",
+      "financial_status": "partially_paid",
+      "cancelled_at": null,
+      "closed_at": null,
+      "subtotal_price": "1000.00",
+      "total_price": "1100.00",
+      "total_tax": "100.00",
+      "currency": "UAH",
+      "line_items": [
+        {
+          "title": "Online Only Product",
+          "quantity": 1,
+          "price": "1000.00",
+          "variant_id": 905
+        }
+      ]
+    },
+    {
+      "id": 9000000000005,
+      "created_at": "2026-05-15T16:45:00+03:00",
+      "financial_status": "paid",
+      "cancelled_at": null,
+      "closed_at": "2026-05-15T18:00:00+03:00",
+      "subtotal_price": "3000.00",
+      "total_price": "3300.00",
+      "total_tax": "300.00",
+      "currency": "UAH",
+      "line_items": [
+        {
+          "title": "Membership lvl 3",
+          "quantity": 1,
+          "price": "3000.00",
+          "variant_id": 906
+        }
+      ]
     }
   ],
   "GetOpenCheckouts": {
