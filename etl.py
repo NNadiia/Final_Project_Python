@@ -29,13 +29,13 @@ def check_status(status):
     return None
 
 
-def check_tx_type(tx_type):
+def check_tx_type(tx_type): 
     if tx_type in TX_TYPES:
         return tx_type
     return None
 
 
-def get_status_general(order):   #defines order general status as there is no info in file
+def get_status_general(order):   #defines general order status as there is no info in file
     if order.get("cancelled_at"):
         return "cancelled"
     elif order.get("closed_at"):
@@ -47,6 +47,9 @@ def get_status_general(order):   #defines order general status as there is no in
 
 def map_shopify_orders (orders):
     result = []
+    if not orders:
+        return result
+    
     for order in orders:
         total_qty = 0
         for item in order.get("line_items", []):
@@ -63,8 +66,8 @@ def map_shopify_orders (orders):
             "total_quantity": total_qty,
             "status_general": get_status_general(order),
             "status_financial":check_status(order.get("financial_status", "")),
-            "currency":           order.get("currency", "UAH"),
-            "line_items":         order.get("line_items", [])
+            "currency": "USD"  # order.get("currency", "UAH") -future improvement: currency normalization to USD
+            "line_items": order.get("line_items", [])
         })
     return result
 
@@ -73,48 +76,172 @@ def map_shopify_orders (orders):
 
 def map_shopify_products(products):
     result = []
+    if not products:
+        return result
+
     for product in products:
         result.append({
-            "id":           generate_id(),
-            "original_id":  str(product["id"]),
-            "source":       "Shopify",
-            "title":        product.get("title", ""),
+            "id": generate_id(),
+            "original_id": str(product["id"]),
+            "source": "Shopify",
+            "title": product.get("title", ""),
             "product_type": product.get("product_type", ""),
-            "status":       product.get("status", ""),
-            "created_at":   product.get("created_at", "")[:10]
+            "status":  product.get("status", ""),
+            "created_at": product.get("created_at", "")[:10]
         })
     return result
 
 
- #Mapping Shopify order line items to unified schema
+ #Mapping Shopify order line items into DB
 def map_shopify_order_details(orders):
     result = []
+    if not orders:
+        return result
+    
     for order in orders:
         for item in order.get("line_items", []):
             result.append({
-                "id":          generate_id(),
-                "order_id":    str(order["id"]),
-                "product_id":  str(item.get("variant_id", "")),
-                "title":       item.get("title", ""),
-                "quantity":    item.get("quantity", 0),
+                "id":  generate_id(),
+                "order_id": str(order["id"]),
+                "product_id": str(item.get("variant_id", "")),
+                "title": item.get("title", ""),
+                "quantity": item.get("quantity", 0),
                 "total_price": round(float(item.get("price", 0)) * item.get("quantity", 0), 2)
             })
     return result
 
-#Maps Shopify transactions to unified schema:
 
+#Maps Shopify transactions into DB:
 def map_shopify_transactions(transactions):
     result = []
+    if not transactions:
+        return result
+    
     for transaction in transactions:
         result.append({
-            "id":             generate_id(),
-            "original_id":    str(transaction.get("id", "")),
-            "order_id":       str(transaction.get("source_order_id", "")),
-            "tx_type":        transaction.get("type", ""),
-            "cost":           float(transaction.get("net") or 0),
-            "currency":       transaction.get("currency", ""),
+            "id": generate_id(),
+            "original_id": str(transaction.get("id", "")),
+            "order_id": str(transaction.get("source_order_id", "")),
+            "tx_type": check_tx_type(transaction.get("type", "").upper()),
+            "cost":  float(transaction.get("net") or 0),
+            "currency": transaction.get("currency", "USD"),
             "transaction_ts": transaction.get("processed_at", "")[:10],
-            "status":         transaction.get("payout_status", "")
+            "status": transaction.get("payout_status", "")
         })
     return result
 
+
+#Mapping eBay orders into DB
+def map_ebay_orders(orders):
+    result = []
+    if not orders:
+        return result
+    
+    for order in orders:
+        price = order.get("pricingSummary", {})
+        subtotal = float(price.get("priceSubtotal", {}).get("value", 0))
+        delivery = float(price.get("deliveryCost", {}).get("value", 0))
+        total    = float(price.get("total", {}).get("value", 0))
+
+        total_qty = 0
+        for item in order.get("lineItems", []):
+            total_qty += item.get("quantity", 0)
+
+
+        fulfillment = order.get("orderFulfillmentStatus", "")  #Defines general order status based on orderFulfillmentStatus from eBay
+        if fulfillment == "FULFILLED":
+            status_general = "closed"
+        elif fulfillment == "NOT_STARTED":
+            status_general = "open"
+        else:
+            status_general = "open"
+
+
+        result.append({
+            "id": generate_id(),
+            "original_id": order.get("orderId", ""),
+            "source": "eBay",
+            "create_date": order.get("creationDate", "")[:10],
+            "amount": subtotal,
+            "cost": subtotal + delivery,
+            "cost_with_discount": total,
+            "total_quantity": total_qty,
+            "status_general": check_status(status_general),
+            "status_financial": check_status(order.get("orderPaymentStatus", "").lower()),
+            "currency": price.get("total", {}).get("currency", "USD"),
+            "line_items": order.get("lineItems", [])
+        })
+    return result
+
+
+#Mapping eBay products into DB
+def map_ebay_products(products):
+    result = []
+    if not products:
+       return result
+    
+    unique_product_ids = set()
+    items = products["GetAdvancedItem"]["findItemsAdvancedResponse"]["searchResult"]["item"]
+    for item in items:
+        original_id = str(item.get("itemId", ""))
+        if original_id not in unique_product_ids:
+            unique_product_ids.add(original_id)
+            result.append({
+                "id":  generate_id(),
+                "original_id": str(item.get("itemId", "")),
+                "source":  "eBay",
+                "title": item.get("title", ""),
+                "product_type": item.get("primaryCategory", {}).get("categoryName", ""),
+                "status": item.get("condition", {}).get("conditionDisplayName", ""),
+                "created_at": item.get("listingInfo", {}).get("startTime", "")[:10]
+            })
+    return result
+
+#Mapping eBay order line items into DB
+def map_ebay_order_details(orders):
+    result = []
+    if not orders:
+        return result
+    
+    for order in orders:
+        for item in order.get("lineItems", []):
+            result.append({
+                "id": generate_id(),
+                "order_id": order.get("orderId", ""),
+                "product_id": str(item.get("lineItemId", "")),
+                "title":  item.get("title", ""),
+                "quantity": item.get("quantity", 0),
+                "total_price": float(item.get("total", {}).get("value", 0))
+            })
+    return result
+
+#Mapping eBay transactions into DB
+def map_ebay_transactions(data):
+    result = []
+    txns = data.get("GetOrderTransactions", [])
+    if not order:
+        return result
+
+    status = order.get("CheckoutStatus", {}).get("Status", "")
+    if status == "Complete":
+        tx_type = "SALE"
+    elif status == "Failed":
+        tx_type = "REFUND"
+    else:
+        tx_type = "SALE"
+
+    response = txns[0].get("GetOrderTransactionsResponse", {})
+    order = response.get("OrderArray", {}).get("Order", {})
+
+    if order:
+        result.append({
+            "id":  generate_id(),
+            "original_id":order.get("ExtendedOrderID", ""),
+            "order_id": order.get("OrderID", ""),
+            "tx_type":  check_tx_type(tx_type),
+            "cost":  float(order.get("AmountPaid", {}).get("#text", 0)),
+            "currency": order.get("AmountPaid", {}).get("@currencyID", "USD"),
+            "transaction_ts": order.get("PaidTime", "")[:10],
+            "status": status
+        })
+    return result
