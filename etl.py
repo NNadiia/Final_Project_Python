@@ -51,23 +51,24 @@ def map_shopify_orders (orders):
         return result
     
     for order in orders:
+                
         total_qty = 0
         for item in order.get("line_items", []):
             total_qty += item.get("quantity", 0)
 
-            result.append({
-            "id": generate_id(),
-            "original_id": str(order["id"]),
-            "source": "Shopify",
-            "create_date": order["created_at"][:10],
-            "amount": float(order.get("subtotal_price") or 0),
-            "cost": float(order.get("subtotal_price") or 0) + float(order.get("total_tax") or 0),
-            "cost_with_discount": float(order.get("total_price") or 0),
-            "total_quantity": total_qty,
-            "status_general": get_status_general(order),
-            "status_financial":check_status(order.get("financial_status", "")),
-            "currency": "USD"  # order.get("currency", "UAH") -future improvement: currency normalization to USD
-            "line_items": order.get("line_items", [])
+        result.append({
+                "id": generate_id(),
+                "original_id": str(order["id"]),
+                "source": "Shopify",
+                "create_date": order["created_at"][:10],
+                "amount": float(order.get("subtotal_price") or 0),
+                "cost": float(order.get("subtotal_price") or 0) + float(order.get("total_tax") or 0),
+                "cost_with_discount": float(order.get("total_price") or 0),
+                "total_quantity": total_qty,
+                "status_general": get_status_general(order),
+                "status_financial":check_status(order.get("financial_status", "")),
+                "currency": "USD"  # order.get("currency", "UAH") -future improvement: currency normalization to USD
+                "line_items": order.get("line_items", []) 
         })
     return result
 
