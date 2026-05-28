@@ -61,7 +61,7 @@ def create_tables():
                     id TEXT PRIMARY KEY,
                     original_id TEXT,
                     order_id TEXT,
-                    type_id TEXT,
+                    tx_type TEXT,
                     cost REAL,
                     currency TEXT,
                     transaction_ts TEXT,

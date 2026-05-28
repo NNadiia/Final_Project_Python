@@ -5,7 +5,7 @@ Reads data from Shopify and eBay JSON files, maps them into a unified schema and
 
 import json
 import sqlite3
-from db import generate_id, create_tables, clear_tables, DB_NAME, check_status
+from db import generate_id, create_tables, clear_tables, DB_NAME
 
 
 def load_json (filename):   #reads JSON file and returns data
