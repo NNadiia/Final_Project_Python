@@ -248,3 +248,135 @@ def map_ebay_transactions(data):
             "status": status
         })
     return result
+
+
+# --- Save functions ---
+
+#Saves orders to EcomOrders table
+def save_orders(orders):
+    data = []
+    for order in orders:
+        data.append((
+            order["id"],
+            order["original_id"],
+            order["source"],
+            order["create_date"],
+            order["amount"],
+            order["cost"],
+            order["cost_with_discount"],
+            order["total_quantity"],
+            order["status_general"],
+            order["status_financial"],
+            order["currency"]
+        ))
+    try:
+        with sqlite3.connect(DB_NAME) as conn:
+            cursor = conn.cursor()
+            cursor.executemany(
+                "INSERT INTO EcomOrders (id, original_id, source, create_date,amount, cost, cost_with_discount, total_quantity,"
+                "status_general, status_financial, currency) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", data)
+    except sqlite3.Error as e:
+        print("Database error", e)
+
+
+#Saves products to EcomProducts table
+def save_products(products):
+    data = []
+    for product in products:
+        data.append((
+            product["id"],
+            product["original_id"],
+            product["source"],
+            product["title"],
+            product["product_type"],
+            product["status"],
+            product["created_at"]
+        ))
+    try:
+        with sqlite3.connect(DB_NAME) as conn:
+            cursor = conn.cursor()
+            cursor.executemany(
+                "INSERT INTO EcomProducts (id, original_id, source, title, product_type, status, created_at)"
+                 "VALUES (?, ?, ?, ?, ?, ?, ?)", data
+            )
+    except sqlite3.Error as e:
+        print("Database error:", e)
+
+
+#Saves order details to EcomOrderDetails table
+def save_order_details(order_details):
+    data = []
+    for detail in order_details:
+        data.append((
+            detail["id"],
+            detail["order_id"],
+            detail["product_id"],
+            detail["title"],
+            detail["quantity"],
+            detail["total_price"]
+        ))
+    try:
+        with sqlite3.connect(DB_NAME) as conn:
+            cursor = conn.cursor()
+            cursor.executemany(
+                "INSERT INTO EcomOrderDetails (id, order_id, product_id, title, quantity, total_price)"
+                "VALUES (?, ?, ?, ?, ?, ?)", data
+            )
+    except sqlite3.Error as e:
+        print("Database error:", e)     
+
+
+#Saves transactions to EcomTransactions table
+def save_transactions(transactions):
+    data = []
+    for transaction in transactions:
+        data.append((
+            transaction["id"],
+            transaction["original_id"],
+            transaction["order_id"],
+            transaction["tx_type"],
+            transaction["cost"],
+            transaction["currency"],
+            transaction["transaction_ts"],
+            transaction["status"]
+        ))
+    try:
+        with sqlite3.connect(DB_NAME) as conn:
+            cursor = conn.cursor()
+            cursor.executemany(
+                "INSERT INTO EcomTransactions (id, original_id, order_id, tx_type, cost, currency, transaction_ts, status)"
+                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?)", data
+            )
+    except sqlite3.Error as e:
+        print("Database error:", e)           
+
+
+# --- Main ETL function ---
+def run_etl(shopify_file, ebay_file):
+    print("Starting ETL")
+
+    # Extract
+    shopify_data = load_json(shopify_file)
+    ebay_data    = load_json(ebay_file)
+
+    # Transform
+    shopify_orders   = map_shopify_orders(shopify_data.get("GetOrders", []))
+    shopify_products = map_shopify_products(shopify_data.get("GetProducts", []))
+    shopify_details  = map_shopify_order_details(shopify_data.get("GetOrders", []))
+    shopify_txns     = map_shopify_transactions(shopify_data.get("GetTransactions", []))
+
+    ebay_orders   = map_ebay_orders(ebay_data.get("GetOrders", []))
+    ebay_products = map_ebay_products(ebay_data)
+    ebay_details  = map_ebay_order_details(ebay_data.get("GetOrders", []))
+    ebay_txns     = map_ebay_transactions(ebay_data)
+
+    # Load
+    create_tables()
+    clear_tables()
+
+    save_orders(shopify_orders + ebay_orders)
+    save_products(shopify_products + ebay_products)
+    save_order_details(shopify_details + ebay_details)
+    save_transactions(shopify_txns + ebay_txns)
+
+    print("ETL completed!")        
