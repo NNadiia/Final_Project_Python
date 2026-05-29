@@ -11,10 +11,14 @@ from pathlib import Path
 
 def load_json (filename):   #reads JSON file and returns data
     path = Path.cwd() / filename
-    with path.open(mode="r") as file:    
-        data = json.load(file)
-        print (f"Loaded {filename}")
-    return data
+    if path.exists():
+        with path.open(mode="r", encoding="utf-8") as file:
+            data = json.load(file)
+            print(f"Loaded {filename}")
+            return data
+    else:
+        print(f"File {filename} not found!")
+        return None
 
 
 ORDER_STATUSES = [
@@ -185,6 +189,9 @@ def map_ebay_products(products):
     
     unique_product_ids = set()
     items = products["GetAdvancedItem"]["findItemsAdvancedResponse"]["searchResult"]["item"]
+
+    if isinstance(items, dict):
+        items = [items]  #if only one item exists it comes as dict, convert to list for iteration
     for item in items:
         original_id = str(item.get("itemId", ""))
         if original_id not in unique_product_ids:
