@@ -6,10 +6,12 @@ Reads data from Shopify and eBay JSON files, maps them into a unified schema and
 import json
 import sqlite3
 from db import generate_id, create_tables, clear_tables, DB_NAME
+from pathlib import Path
 
 
 def load_json (filename):   #reads JSON file and returns data
-    with open (filename, "r", encoding = "utf-8") as file:
+    path = Path.cwd() / filename
+    with path.open(mode="r") as file:    
         data = json.load(file)
         print (f"Loaded {filename}")
     return data
@@ -24,13 +26,13 @@ TX_TYPES = [
 ]
 
 def check_status(status):
-    if status in ORDER_STATUSES:
+    if status.lower() in ORDER_STATUSES:
         return status
     return None
 
 
 def check_tx_type(tx_type): 
-    if tx_type in TX_TYPES:
+    if tx_type.upper() in TX_TYPES:
         return tx_type
     return None
 
@@ -190,7 +192,7 @@ def map_ebay_products(products):
             result.append({
                 "id":  generate_id(),
                 "original_id": str(item.get("itemId", "")),
-                "source":  "eBay",
+                "source": "eBay",
                 "title": item.get("title", ""),
                 "product_type": item.get("primaryCategory", {}).get("categoryName", ""),
                 "status": item.get("condition", {}).get("conditionDisplayName", ""),
@@ -256,19 +258,9 @@ def map_ebay_transactions(data):
 def save_orders(orders):
     data = []
     for order in orders:
-        data.append((
-            order["id"],
-            order["original_id"],
-            order["source"],
-            order["create_date"],
-            order["amount"],
-            order["cost"],
-            order["cost_with_discount"],
-            order["total_quantity"],
-            order["status_general"],
-            order["status_financial"],
-            order["currency"]
-        ))
+        data.append((order["id"], order["original_id"], order["source"], order["create_date"], order["amount"], order["cost"],
+            order["cost_with_discount"], order["total_quantity"], order["status_general"], order["status_financial"],
+            order["currency"]))
     try:
         with sqlite3.connect(DB_NAME) as conn:
             cursor = conn.cursor()
@@ -283,15 +275,8 @@ def save_orders(orders):
 def save_products(products):
     data = []
     for product in products:
-        data.append((
-            product["id"],
-            product["original_id"],
-            product["source"],
-            product["title"],
-            product["product_type"],
-            product["status"],
-            product["created_at"]
-        ))
+        data.append((product["id"], product["original_id"], product["source"], product["title"], product["product_type"],
+            product["status"], product["created_at"]))
     try:
         with sqlite3.connect(DB_NAME) as conn:
             cursor = conn.cursor()
@@ -307,14 +292,8 @@ def save_products(products):
 def save_order_details(order_details):
     data = []
     for detail in order_details:
-        data.append((
-            detail["id"],
-            detail["order_id"],
-            detail["product_id"],
-            detail["title"],
-            detail["quantity"],
-            detail["total_price"]
-        ))
+        data.append((detail["id"], detail["order_id"], detail["product_id"], detail["title"], detail["quantity"],
+            detail["total_price"]))
     try:
         with sqlite3.connect(DB_NAME) as conn:
             cursor = conn.cursor()
@@ -330,16 +309,8 @@ def save_order_details(order_details):
 def save_transactions(transactions):
     data = []
     for transaction in transactions:
-        data.append((
-            transaction["id"],
-            transaction["original_id"],
-            transaction["order_id"],
-            transaction["tx_type"],
-            transaction["cost"],
-            transaction["currency"],
-            transaction["transaction_ts"],
-            transaction["status"]
-        ))
+        data.append((transaction["id"], transaction["original_id"], transaction["order_id"], transaction["tx_type"],
+            transaction["cost"], transaction["currency"], transaction["transaction_ts"], transaction["status"] ))
     try:
         with sqlite3.connect(DB_NAME) as conn:
             cursor = conn.cursor()
@@ -357,18 +328,17 @@ def run_etl(shopify_file, ebay_file):
 
     # Extract
     shopify_data = load_json(shopify_file)
-    ebay_data    = load_json(ebay_file)
+    ebay_data = load_json(ebay_file)
 
     # Transform
-    shopify_orders   = map_shopify_orders(shopify_data.get("GetOrders", []))
+    shopify_orders = map_shopify_orders(shopify_data.get("GetOrders", []))
     shopify_products = map_shopify_products(shopify_data.get("GetProducts", []))
-    shopify_details  = map_shopify_order_details(shopify_data.get("GetOrders", []))
-    shopify_txns     = map_shopify_transactions(shopify_data.get("GetTransactions", []))
-
-    ebay_orders   = map_ebay_orders(ebay_data.get("GetOrders", []))
+    shopify_details = map_shopify_order_details(shopify_data.get("GetOrders", []))
+    shopify_txns = map_shopify_transactions(shopify_data.get("GetTransactions", []))
+    ebay_orders = map_ebay_orders(ebay_data.get("GetOrders", []))
     ebay_products = map_ebay_products(ebay_data)
-    ebay_details  = map_ebay_order_details(ebay_data.get("GetOrders", []))
-    ebay_txns     = map_ebay_transactions(ebay_data)
+    ebay_details = map_ebay_order_details(ebay_data.get("GetOrders", []))
+    ebay_txns = map_ebay_transactions(ebay_data)
 
     # Load
     create_tables()
