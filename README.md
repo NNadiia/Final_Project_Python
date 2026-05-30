@@ -28,13 +28,13 @@ EcomTransactions - Payment transactions
 
 ## KPIs
 - Total revenue by source (Shopify vs eBay)
-- Orders count and revenue by month
-- Top-5 products by revenue
-- Orders by financial status
+- Orders count and revenue by month (split by source)
+- Top-5 products by revenue (split by source)
+- Orders by financial status (split by source)
 
 ## Dashboard
-Interactive dashboard built with Plotly - opens in browser.
-Click on legend to filter by source.
+Interactive dashboard built with Matplotlib.
+Use RadioButtons filter on the left to switch between All, Shopify and eBay data.
 
 ## Future Improvements
 - Add date range filter
@@ -67,6 +67,13 @@ python main.py
 - json (built-in)
 - uuid (built-in)
 - pathlib (built-in)
+
+## AI Tools Usage
+Claude AI, Chat GPT was used to support development:
+- Debugging and error fixing
+- Code explanations and learning
+- SQL query optimization
+- Сode was written manually following AI explanations and guidance
 
 ## Author
 Nadiia — ReDI School Munich, Python Course 2026
