@@ -48,19 +48,28 @@ Use RadioButtons filter on the left to switch between All, Shopify and eBay data
 - Interactive dashboard using Plotly Dash
 
 ## How to Run
+
 1. Clone the repository:
+```bash
 git clone https://github.com/NNadiia/Final_Project_Python.git
 cd Final_Project_Python
+```
 
 2. Create and activate virtual environment:
+```bash
 python -m venv ecommerce_venv
 ecommerce_venv\Scripts\activate
+```
 
 3. Install dependencies:
+```bash
 pip install -r requirements.txt
+```
 
 4. Run the project:
+```bash
 python main.py
+```
 
 ## Technologies
 - Python 3.14
