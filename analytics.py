@@ -36,17 +36,18 @@ def get_top_products():
     print("Top 5 products by revenue and source", result)
     return result
     
-#Orders by financial status and source
+#Orders by financial status
 def get_orders_by_status():
     with sqlite3.connect(DB_NAME) as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT status_financial, source, COUNT(*) AS total_orders, ROUND(SUM(amount), 2) AS total_revenue " 
-        " FROM EcomOrders GROUP BY status_financial, source ORDER BY total_orders DESC")
+        "FROM EcomOrders GROUP BY status_financial, source ORDER BY total_orders DESC")
         result = cursor.fetchall()
     print("Orders by financial status and source", result)
     return result
-    
-#Total summary by sourc
+
+
+#Total summary by source
 def get_total_summary():
     with sqlite3.connect(DB_NAME) as conn:
         cursor = conn.cursor()

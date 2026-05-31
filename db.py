@@ -71,6 +71,7 @@ def create_tables():
         """)
 
  #Clears all tables before new load
+ #Future improvement: store historical data with loaded_at timestamp instead of clearing
 
 def clear_tables():
     with sqlite3.connect(DB_NAME) as conn:
